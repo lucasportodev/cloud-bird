@@ -66,6 +66,7 @@ const bird = {
   jump() {
     this.vy = JUMP_FORCE;
     this.flapAnim = 1;
+    SFX.jump();
   },
 
   update() {
@@ -364,6 +365,9 @@ function die() {
   if (score > highScore) {
     highScore = score;
     localStorage.setItem('cloudbird_hs', highScore);
+    SFX.newRecord();
+  } else {
+    SFX.die();
   }
   setTimeout(() => { justDied = false; }, 600);
 }
@@ -379,8 +383,44 @@ function resetGame() {
   spawnPipe();
 }
 
+// ── Botão de som ──────────────────────────
+const SOUND_BTN = { x: GAME_WIDTH - 50, y: 18, size: 44 };
+
+function isSoundButtonHit(clientX, clientY) {
+  const rect  = canvas.getBoundingClientRect();
+  const scaleX = GAME_WIDTH  / rect.width;
+  const scaleY = GAME_HEIGHT / rect.height;
+  const gx = (clientX - rect.left)  * scaleX;
+  const gy = (clientY - rect.top)   * scaleY;
+  return (
+    gx >= SOUND_BTN.x &&
+    gx <= SOUND_BTN.x + SOUND_BTN.size &&
+    gy >= SOUND_BTN.y &&
+    gy <= SOUND_BTN.y + SOUND_BTN.size
+  );
+}
+
+function drawSoundButton() {
+  const { x, y, size } = SOUND_BTN;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '22px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(SFX.isEnabled() ? '🔊' : '🔇', x + size / 2, y + size / 2 + 1);
+  ctx.restore();
+}
+
 // ── Input ─────────────────────────────────
-function handleInput() {
+function handleInput(clientX, clientY) {
+  SFX.init();
+  if (isSoundButtonHit(clientX, clientY)) {
+    SFX.toggle();
+    return;
+  }
   if (state === STATE.MENU) {
     resetGame();
   } else if (state === STATE.PLAYING) {
@@ -390,10 +430,10 @@ function handleInput() {
   }
 }
 
-canvas.addEventListener('mousedown', handleInput);
+canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  handleInput();
+  handleInput(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 
 // ── Update ────────────────────────────────
@@ -434,6 +474,7 @@ function update(ts) {
       if (!p.scored && p.x < bird.x) {
         p.scored = true;
         score++;
+        SFX.score();
         spawnParticles(bird.x + 30, bird.y);
       }
     });
@@ -451,6 +492,7 @@ function draw() {
   if (state === STATE.MENU) {
     drawGround();
     drawMenu();
+    drawSoundButton();
     return;
   }
 
@@ -468,6 +510,8 @@ function draw() {
   if (state === STATE.DEAD) {
     drawGameOver();
   }
+
+  drawSoundButton();
 }
 
 // ── HUD ───────────────────────────────────
