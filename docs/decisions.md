@@ -82,6 +82,55 @@ Registro de todas as decisões tomadas, com contexto e motivo.
 
 ## 2026-03-26 — Personagem
 
-**Decisão:** A definir — candidatos: pintinho fofo, passarinho original
+**Decisão:** Pintinho amarelo fofo
 
-**Próximo passo:** Gerar referências visuais com IA (DALL·E / Leonardo AI) e escolher 1 direção.
+**Alternativas consideradas:**
+- Passarinho colorido original
+- Dino baby
+- Dragãozinho fofo
+
+**Motivo:** Universal, carismático, fácil de animar, forte apelo infantil.
+
+---
+
+## 2026-03-26 — Obstáculos
+
+**Decisão:** Nuvens com gap no meio
+
+**Alternativas consideradas:**
+- Mix de nuvens, balões e pipas
+- Canos estilizados
+
+**Motivo:** Combina diretamente com o nome Cloud Bird, visual limpo e coerente.
+
+---
+
+## 2026-03-26 — Dificuldade
+
+**Decisão:** Fácil — voltado para crianças de 4–8 anos jogando sozinhas
+
+**Motivo:** Colisão tolerante e velocidade baixa para não frustrar o público principal.
+
+---
+
+## 2026-03-26 — Monetização (detalhamento)
+
+**Decisão:** Só anúncios (rewarded + interstitial) + opção de remover ads. Sem loja de skins.
+
+**Motivo:** Menor escopo, entrega mais rápida, menos complexidade de desenvolvimento.
+
+---
+
+## 2026-03-26 — Sons
+
+**Decisão:** Biblioteca gratuita (Freesound, Mixkit)
+
+**Motivo:** Mais rápido, sem custo, qualidade suficiente para o escopo do projeto.
+
+---
+
+## 2026-03-26 — Meta de protótipo
+
+**Decisão:** Protótipo jogável ainda essa semana (até 2026-03-31)
+
+**Motivo:** Validar a mecânica base antes de investir em arte e sons.
