@@ -92,60 +92,133 @@ const bird = {
     ctx.rotate(this.angle * Math.PI / 180);
 
     const r = BIRD_RADIUS;
+    const vy = this.vy !== undefined ? this.vy : 0;
+    const isDead = state === STATE.DEAD;
 
-    // Sombra suave
-    ctx.shadowColor = 'rgba(0,0,0,0.15)';
-    ctx.shadowBlur  = 6;
-    ctx.shadowOffsetY = 3;
+    // Sombra
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur  = 8;
+    ctx.shadowOffsetY = 4;
 
-    // Corpo (círculo amarelo)
+    // Asa (atrás do corpo) — animada no pulo
+    const wingFlap = Math.sin(this.flapAnim * Math.PI);
+    const wingY = 2 - wingFlap * 10;
+    ctx.save();
+    ctx.rotate(-0.2);
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFD43B';
+    ctx.ellipse(-6, wingY, r * 0.7, r * 0.38, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#E6A817';
     ctx.fill();
-    ctx.strokeStyle = '#E6A817';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.restore();
 
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // Asa (elipse, flap animada)
-    const wingY = -2 + Math.sin(this.flapAnim * Math.PI) * -8;
+    // Corpo oval com gradiente radial
+    const bodyGrad = ctx.createRadialGradient(-4, -5, 2, 0, 2, r * 1.1);
+    bodyGrad.addColorStop(0,   '#FFF59D');
+    bodyGrad.addColorStop(0.5, '#FFD43B');
+    bodyGrad.addColorStop(1,   '#F9A825');
     ctx.beginPath();
-    ctx.ellipse(-4, wingY, r * 0.65, r * 0.35, -0.3, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFC107';
+    ctx.ellipse(0, 2, r, r * 0.92, 0, 0, Math.PI * 2);
+    ctx.fillStyle = bodyGrad;
     ctx.fill();
+    ctx.strokeStyle = '#E6A817';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 
     // Barriga (mais clara)
+    const bellyGrad = ctx.createRadialGradient(5, 6, 1, 5, 6, r * 0.6);
+    bellyGrad.addColorStop(0, '#FFFDE7');
+    bellyGrad.addColorStop(1, 'rgba(255,248,196,0)');
     ctx.beginPath();
-    ctx.arc(4, 3, r * 0.55, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFE57A';
+    ctx.ellipse(5, 7, r * 0.52, r * 0.42, 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = bellyGrad;
     ctx.fill();
 
-    // Bico
+    // Blush (bochechas)
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#FF8A80';
+    ctx.beginPath(); ctx.ellipse(10, 4, 5, 3.5, 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Penugem no topo (3 tufos)
+    ctx.fillStyle = '#FFD43B';
+    ctx.strokeStyle = '#E6A817';
+    ctx.lineWidth = 1;
+    [[-6, -r + 2], [0, -r - 2], [6, -r + 1]].forEach(([px, py]) => {
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // Bico arredondado (dois arcos)
     ctx.beginPath();
-    ctx.moveTo(r - 2, -3);
-    ctx.lineTo(r + 10, 0);
-    ctx.lineTo(r - 2, 4);
+    ctx.arc(r + 2, -1, 6, Math.PI * 0.7, Math.PI * 1.9);
+    ctx.arc(r + 2,  4, 5, Math.PI * 1.1, Math.PI * 2.3);
     ctx.closePath();
     ctx.fillStyle = '#FF8C00';
     ctx.fill();
+    ctx.strokeStyle = '#E65100';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
 
-    // Olho
+    // Olho branco (maior e mais expressivo)
+    const eyeScale = isDead ? 0.8 : (vy < -3 ? 1.0 : vy > 3 ? 1.25 : 1.1);
     ctx.beginPath();
-    ctx.arc(6, -5, 5, 0, Math.PI * 2);
+    ctx.arc(7, -5, 6 * eyeScale, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
-    ctx.beginPath();
-    ctx.arc(7, -5, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#222';
-    ctx.fill();
-    // brilho
-    ctx.beginPath();
-    ctx.arc(8, -6, 1, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
+
+    if (isDead) {
+      // Olho fechado (X)
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(4, -8); ctx.lineTo(10, -2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, -8); ctx.lineTo(4, -2); ctx.stroke();
+    } else {
+      // Iris colorida
+      ctx.beginPath();
+      ctx.arc(7.5, -5, 3.8 * eyeScale, 0, Math.PI * 2);
+      ctx.fillStyle = '#1565C0';
+      ctx.fill();
+      // Pupila
+      ctx.beginPath();
+      ctx.arc(7.8, -5, 2.2 * eyeScale, 0, Math.PI * 2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+      // Brilho duplo
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(9,   -6.5, 1.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(6.5, -4,   0.7, 0, Math.PI * 2); ctx.fill();
+
+      // Sobrancelha — expressão
+      ctx.strokeStyle = '#E65100';
+      ctx.lineWidth = 1.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (vy < -3) {
+        // Sorrindo — sobrancelha relaxada
+        ctx.arc(7, -13, 5, Math.PI * 1.15, Math.PI * 1.85);
+      } else if (vy > 3) {
+        // Assustado — sobrancelha levantada
+        ctx.moveTo(3.5, -13); ctx.quadraticCurveTo(7, -16, 11, -13);
+      } else {
+        // Normal
+        ctx.moveTo(4, -12); ctx.quadraticCurveTo(7, -13.5, 11, -12);
+      }
+      ctx.stroke();
+
+      // Boca — sorriso quando subindo
+      if (vy < -2) {
+        ctx.strokeStyle = '#E65100';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(10, 3, 4, Math.PI * 0.1, Math.PI * 0.9);
+        ctx.stroke();
+      }
+    }
 
     ctx.restore();
   },
@@ -216,40 +289,48 @@ class CloudPipe {
 function drawCloud(cx, edgeY, top) {
   ctx.save();
 
-  // Recorte: área que a nuvem ocupa
+  // Recorte
   ctx.beginPath();
   if (top) {
-    ctx.rect(cx - CLOUD_WIDTH / 2 - 10, 0, CLOUD_WIDTH + 20, edgeY);
+    ctx.rect(cx - CLOUD_WIDTH / 2 - 15, 0, CLOUD_WIDTH + 30, edgeY + 2);
   } else {
-    ctx.rect(cx - CLOUD_WIDTH / 2 - 10, edgeY, CLOUD_WIDTH + 20, GROUND_Y - edgeY);
+    ctx.rect(cx - CLOUD_WIDTH / 2 - 15, edgeY - 2, CLOUD_WIDTH + 30, GROUND_Y - edgeY + 4);
   }
   ctx.clip();
 
-  // Sombra suave
-  ctx.shadowColor = 'rgba(0,0,0,0.12)';
-  ctx.shadowBlur  = 8;
-
-  ctx.fillStyle = '#fff';
-
+  // Preenchimento sólido base
+  ctx.fillStyle = '#EEF6FF';
   if (top) {
-    // bolas de nuvem na borda inferior (top)
-    const y = edgeY;
-    ctx.beginPath(); ctx.arc(cx - 25, y - 10, 28, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx,       y - 18, 32, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + 25,  y - 10, 28, 0, Math.PI * 2); ctx.fill();
-    // preenchimento sólido acima
-    ctx.shadowBlur = 0;
-    ctx.fillRect(cx - CLOUD_WIDTH / 2 - 5, 0, CLOUD_WIDTH + 10, y - 10);
+    ctx.fillRect(cx - CLOUD_WIDTH / 2 - 10, 0, CLOUD_WIDTH + 20, edgeY - 8);
   } else {
-    // bolas de nuvem na borda superior (bottom)
-    const y = edgeY;
-    ctx.beginPath(); ctx.arc(cx - 25, y + 10, 28, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx,       y + 18, 32, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + 25,  y + 10, 28, 0, Math.PI * 2); ctx.fill();
-    // preenchimento sólido abaixo
-    ctx.shadowBlur = 0;
-    ctx.fillRect(cx - CLOUD_WIDTH / 2 - 5, y + 10, CLOUD_WIDTH + 10, GROUND_Y - y);
+    ctx.fillRect(cx - CLOUD_WIDTH / 2 - 10, edgeY + 8, CLOUD_WIDTH + 20, GROUND_Y - edgeY);
   }
+
+  // Bolas de nuvem com gradiente radial
+  const balls = top
+    ? [ [cx - 28, edgeY - 8,  24], [cx - 10, edgeY - 20, 28],
+        [cx + 10, edgeY - 20, 28], [cx + 28, edgeY - 8,  24],
+        [cx,      edgeY - 28, 22] ]
+    : [ [cx - 28, edgeY + 8,  24], [cx - 10, edgeY + 20, 28],
+        [cx + 10, edgeY + 20, 28], [cx + 28, edgeY + 8,  24],
+        [cx,      edgeY + 28, 22] ];
+
+  balls.forEach(([bx, by, br]) => {
+    const g = ctx.createRadialGradient(bx - br * 0.3, by - br * 0.3, br * 0.1, bx, by, br);
+    g.addColorStop(0,   '#FFFFFF');
+    g.addColorStop(0.6, '#F0F8FF');
+    g.addColorStop(1,   '#CCDFF5');
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.shadowColor = 'rgba(100,150,200,0.18)';
+    ctx.shadowBlur  = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(180,210,240,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
 
   ctx.restore();
 }
@@ -286,11 +367,19 @@ function updateBgClouds() {
 function drawBgClouds() {
   bgClouds.forEach(c => {
     ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(c.x,          c.y,          c.r,        0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(c.x + c.r,    c.y - c.r * 0.4, c.r * 0.7, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(c.x - c.r * 0.6, c.y + c.r * 0.1, c.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.45;
+    const balls = [
+      [c.x,              c.y,              c.r],
+      [c.x + c.r * 0.9,  c.y - c.r * 0.35, c.r * 0.65],
+      [c.x - c.r * 0.75, c.y + c.r * 0.1,  c.r * 0.55],
+      [c.x + c.r * 0.4,  c.y - c.r * 0.55, c.r * 0.5],
+    ];
+    balls.forEach(([bx, by, br]) => {
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    });
     ctx.restore();
   });
 }
@@ -338,21 +427,90 @@ let menuBobT = 0;
 
 // ── Background ────────────────────────────
 function drawBackground() {
+  // Gradiente do céu
   const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-  grad.addColorStop(0,   '#5BB8F5');
-  grad.addColorStop(1,   '#B8E0FF');
+  grad.addColorStop(0,   '#3FA3E8');
+  grad.addColorStop(0.6, '#7EC8F0');
+  grad.addColorStop(1,   '#C8E8FF');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  // Sol
+  const sx = GAME_WIDTH - 60, sy = 60;
+  ctx.save();
+  // raios
+  ctx.strokeStyle = 'rgba(255,230,80,0.55)';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(a) * 28, sy + Math.sin(a) * 28);
+    ctx.lineTo(sx + Math.cos(a) * 42, sy + Math.sin(a) * 42);
+    ctx.stroke();
+  }
+  // círculo do sol
+  const sunGrad = ctx.createRadialGradient(sx - 5, sy - 5, 4, sx, sy, 22);
+  sunGrad.addColorStop(0, '#FFF9C4');
+  sunGrad.addColorStop(1, '#FFD600');
+  ctx.beginPath();
+  ctx.arc(sx, sy, 22, 0, Math.PI * 2);
+  ctx.fillStyle = sunGrad;
+  ctx.shadowColor = 'rgba(255,200,0,0.4)';
+  ctx.shadowBlur  = 18;
+  ctx.fill();
+  ctx.restore();
+
+  // Colinas no horizonte
+  ctx.save();
+  // colina de trás (mais clara)
+  ctx.fillStyle = '#81C784';
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y);
+  ctx.quadraticCurveTo(80,  GROUND_Y - 70, 180, GROUND_Y - 30);
+  ctx.quadraticCurveTo(280, GROUND_Y - 80, 400, GROUND_Y - 20);
+  ctx.lineTo(400, GROUND_Y); ctx.closePath();
+  ctx.fill();
+  // colina da frente (mais escura)
+  ctx.fillStyle = '#66BB6A';
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y);
+  ctx.quadraticCurveTo(100, GROUND_Y - 45, 200, GROUND_Y - 20);
+  ctx.quadraticCurveTo(300, GROUND_Y - 55, 400, GROUND_Y - 10);
+  ctx.lineTo(400, GROUND_Y); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 // ── Chão ──────────────────────────────────
 function drawGround() {
-  // Grama
-  ctx.fillStyle = '#7BC67A';
+  // Bloco de terra com gradiente
+  const groundGrad = ctx.createLinearGradient(0, GROUND_Y, 0, GAME_HEIGHT);
+  groundGrad.addColorStop(0,   '#7BC67A');
+  groundGrad.addColorStop(0.3, '#5DA85C');
+  groundGrad.addColorStop(1,   '#388E3C');
+  ctx.fillStyle = groundGrad;
   ctx.fillRect(0, GROUND_Y, GAME_WIDTH, GAME_HEIGHT - GROUND_Y);
-  // Linha de grama mais escura
-  ctx.fillStyle = '#5DA85C';
-  ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 8);
+
+  // Linha de grama
+  ctx.fillStyle = '#4CAF50';
+  ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 6);
+
+  // Tufos de grama
+  ctx.strokeStyle = '#2E7D32';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  for (let gx = 8; gx < GAME_WIDTH; gx += 18) {
+    const h = 5 + Math.sin(gx * 0.4) * 3;
+    ctx.beginPath();
+    ctx.moveTo(gx,     GROUND_Y + 2);
+    ctx.lineTo(gx - 3, GROUND_Y - h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gx + 4,  GROUND_Y + 2);
+    ctx.lineTo(gx + 4,  GROUND_Y - h + 2);
+    ctx.stroke();
+  }
 }
 
 // ── Morte ─────────────────────────────────
